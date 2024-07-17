@@ -62,9 +62,9 @@ bool saveConfig() {
 void getSensorReadings() {
   //temperature =  sht1x.readTemperatureC();
   //humidity =  sht1x.readHumidity();
-  #if defined(ESP8266)
-    voltage  = ESP.getVcc() / 1023.0F;
-  #endif
+
+  voltage  = ESP.getVcc() / 1023.0F;
+
   //dewpoint = (243.5*(log(humidity/100)+((17.67*temperature)/(243.5+temperature)))/(17.67-log(humidity/100)-((17.67*temperature)/(243.5+temperature))));
 }
 
@@ -128,11 +128,8 @@ void initServer(){
         client->send("hello!", NULL, millis(), 10000);
     });
     server.addHandler(&events);
-    #ifdef ESP32
-        server.addHandler(new FSEditor(LittleFS, "admin","admin"));
-    #elif defined(ESP8266)
-        server.addHandler(new FSEditor("admin","admin"));
-    #endif
+    server.addHandler(new FSEditor("admin","admin"));
+
 
 
     // MQTT Server Verbindung
