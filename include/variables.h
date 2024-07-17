@@ -17,6 +17,8 @@ unsigned long lastTime = 0;
 unsigned long lastMeas = 0;
 unsigned long timerDelay = 10000;
 unsigned long time_meas = 60000;
+// dummy status
+bool status = false;
 bool IsRebootRequired = false;
 
 
@@ -28,6 +30,5 @@ float voltage;
 float temp_array[48];
 float humi_array[48];
 
-// dummy status
-bool status;
+
 
