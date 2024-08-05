@@ -19,12 +19,49 @@ bool loadConfig() {
     strlcpy(config.adminpassword, doc["adminpass"] | "admin", sizeof(config.adminpassword));  
     strlcpy(config.webuser, doc["webuser"] | "admin", sizeof(config.webuser));  
     strlcpy(config.webpassword, doc["webpass"] | "admin", sizeof(config.webpassword));  
-    strlcpy(config.mqttserver,doc["mqttserver"] | "192.168.12.2", sizeof(config.mqttserver));
+    strlcpy(config.mqttserver,doc["mqttserver"]["ip"] | "192.168.12.2", sizeof(config.mqttserver));
     config.webserverport = doc["port"] | 80;
 
     // Real world application would store these values in some variables for
     // later use.
 
+    configFile.close();
+    return true;
+}
+
+bool defaultConfig(){
+    StaticJsonDocument<512> doc;
+    strlcpy(config.host, "AZ_envy", sizeof(config.host));    
+    strlcpy(config.ssid, "devnet-34", sizeof(config.ssid));  
+    strlcpy(config.wifipassword, "testerwlan", sizeof(config.wifipassword));  
+    strlcpy(config.adminuser, "admin", sizeof(config.adminuser));  
+    strlcpy(config.adminpassword, "admin", sizeof(config.adminpassword));  
+    strlcpy(config.webuser, "admin", sizeof(config.webuser));  
+    strlcpy(config.webpassword, "admin", sizeof(config.webpassword));  
+    strlcpy(config.mqttserver,"192.168.12.3", sizeof(config.mqttserver));
+    config.webserverport =  80;
+
+    doc["ssid"] = config.ssid;
+    doc["host"] = config.host;
+    doc["wifipass"] = config.wifipassword;
+    doc["adminuser"] = config.adminuser;
+    doc["adminpass"] = config.adminpassword;
+    doc["webuser"] = config.webuser;
+    doc["webpass"] = config.webpassword;
+    doc["mqttserver"]["ip"] = config.mqttserver;
+    doc["port"] = config.webserverport;
+    // Real world application would store these values in some variables for
+    // later use.
+    File configFile = LittleFS.open("/config.json", "w");
+    if (!configFile) {
+        Serial.println("Failed to open config file for writing");
+        return false;
+    }
+
+    // Serialize JSON to file
+    if (serializeJsonPretty(doc, configFile) == 0) {
+        Serial.println(F("Failed to write to file"));
+    }
     configFile.close();
     return true;
 }
@@ -39,7 +76,7 @@ bool saveConfig() {
     doc["adminpass"] = config.adminpassword;
     doc["webuser"] = config.webuser;
     doc["webpass"] = config.webpassword;
-    doc["mqttserver"] = config.mqttserver;
+    doc["mqttserver"]["ip"] = config.mqttserver;
     doc["port"] = config.webserverport;
 
     File configFile = LittleFS.open("/config.json", "w");
@@ -49,7 +86,7 @@ bool saveConfig() {
     }
 
     // Serialize JSON to file
-    if (serializeJson(doc, configFile) == 0) {
+    if (serializeJsonPretty(doc, configFile) == 0) {
         Serial.println(F("Failed to write to file"));
     }
 
@@ -62,10 +99,22 @@ bool saveConfig() {
 void getSensorReadings() {
   //temperature =  sht1x.readTemperatureC();
   //humidity =  sht1x.readHumidity();
-
-  voltage  = ESP.getVcc() / 1023.0F;
-
+  sht30.get();
+  dewpoint = 243.04*(log(sht30.humidity/100)+((17.625*sht30.cTemp)/(243.04+sht30.cTemp)))/(17.625-log(sht30.humidity/100)-((17.625*sht30.cTemp)/(243.04+sht30.cTemp)));
+  humidity = sht30.humidity;
+  temperature = sht30.cTemp;
+  float T = temperature;
+  float RHx = humidity;
+  heatindex =(-42.379+(2.04901523*T)+(10.14333127*RHx)-(0.22475541*T*RHx)-(0.00683783*T*T)-(0.05481717*RHx*RHx)+(0.00122874*T*T*RHx)+(0.00085282*T*RHx*RHx)-(0.00000199*T*T*RHx*RHx)-32)*5/9;
+  if ((sht30.cTemp <= 26.66) || (sht30.humidity <= 40)) heatindex = sht30.cTemp;
   //dewpoint = (243.5*(log(humidity/100)+((17.67*temperature)/(243.5+temperature)))/(17.67-log(humidity/100)-((17.67*temperature)/(243.5+temperature))));
+  float* values= mq2.read(true);
+
+  lpg=mq2.readLPG();
+  co = mq2.readCO();
+  smoke = mq2.readSmoke();
+  //float ADWert = analogRead(A0);
+  Serial.println(lpg); Serial.println(String(lpg));
 }
 
 String processor(const String& var) {
@@ -79,10 +128,19 @@ String processor(const String& var) {
   else if (var == "HUMIDITY") {
     return String(humidity);
   }
-  //---
-  else if (var == "VOLTAGE") {
-    return String(voltage);
+  else if (var == "HEATINDEX") {
+    return String(heatindex);
   }
+  else if (var == "LPG") {
+    return String(lpg);
+  }
+  else if (var == "CO") {
+    return String(co);
+  }
+  else if (var == "SMOKE") {
+    return String(smoke);
+  }
+  //---
   else if (var == "BUILD_TIMESTAMP"){
     return String(__DATE__) + " " + String(__TIME__);
   }
@@ -105,7 +163,10 @@ void initServer(){
       json["temperatur"] = String(temperature);
       json["feuchte"] = String(humidity);
       json["taupunkt"] = String(dewpoint);
-      json["batterie"] = String(voltage);
+      json["heatindex"] = String(heatindex);
+      json["lpg"] = String(lpg);
+      json["co"] = String(co);
+      json["smoke"] = String(smoke);
       serializeJson(json, *response);
       request->send(response);
     });
@@ -168,7 +229,8 @@ bool initWiFi() {
 }
 
 void initPortal(){
-  WiFi.softAP("Sensor-WiFi-Manager");
+  Serial.printf("Connecting to Manager ..");
+  WiFi.softAP("Sensor-Manager");
   server.on("/", HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(LittleFS,"/wifimanager.html","text/html");
   });
