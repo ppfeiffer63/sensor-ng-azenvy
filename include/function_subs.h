@@ -5,7 +5,7 @@ bool loadConfig() {
         return false;
     }
 
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
     auto error = deserializeJson(doc, configFile);
     if (error) {
         Serial.println("Failed to parse config file");
@@ -30,7 +30,7 @@ bool loadConfig() {
 }
 
 bool defaultConfig(){
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
     strlcpy(config.host, "AZ_envy", sizeof(config.host));    
     strlcpy(config.ssid, "devnet-34", sizeof(config.ssid));  
     strlcpy(config.wifipassword, "testerwlan", sizeof(config.wifipassword));  
@@ -67,7 +67,7 @@ bool defaultConfig(){
 }
 
 bool saveConfig() {
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
 
     doc["ssid"] = config.ssid;
     doc["host"] = config.host;
@@ -108,7 +108,7 @@ void getSensorReadings() {
   heatindex =(-42.379+(2.04901523*T)+(10.14333127*RHx)-(0.22475541*T*RHx)-(0.00683783*T*T)-(0.05481717*RHx*RHx)+(0.00122874*T*T*RHx)+(0.00085282*T*RHx*RHx)-(0.00000199*T*T*RHx*RHx)-32)*5/9;
   if ((sht30.cTemp <= 26.66) || (sht30.humidity <= 40)) heatindex = sht30.cTemp;
   //dewpoint = (243.5*(log(humidity/100)+((17.67*temperature)/(243.5+temperature)))/(17.67-log(humidity/100)-((17.67*temperature)/(243.5+temperature))));
-  float* values= mq2.read(true);
+  //float* values= mq2.read(true);
 
   lpg=mq2.readLPG();
   co = mq2.readCO();
@@ -159,7 +159,7 @@ void initServer(){
     // Server send JSON-DATA
     server.on("/api/sensor", HTTP_GET, [](AsyncWebServerRequest *request) {
       AsyncResponseStream *response = request->beginResponseStream("application/json");
-      DynamicJsonDocument json(1024);
+      JsonDocument json;
       json["temperatur"] = String(temperature);
       json["feuchte"] = String(humidity);
       json["taupunkt"] = String(dewpoint);
@@ -172,7 +172,7 @@ void initServer(){
     });
     server.on("/api/wifi-info", HTTP_GET, [](AsyncWebServerRequest *request) {
       AsyncResponseStream *response = request->beginResponseStream("application/json");
-      DynamicJsonDocument json(1024);
+      JsonDocument json;
       json["status"] = "ok";
       json["ssid"] = WiFi.SSID();
       json["ip"] = WiFi.localIP().toString();
