@@ -13,8 +13,8 @@ bool loadConfig() {
     }
 
     strlcpy(config.host, doc["host"] | "haus_75", sizeof(config.host));    
-    strlcpy(config.ssid, doc["ssid"] | "devnet-34", sizeof(config.ssid));  
-    strlcpy(config.wifipassword, doc["wifipass"] | "testerwlan", sizeof(config.wifipassword));  
+    strlcpy(config.ssid, doc["ssid"] | "Sensor", sizeof(config.ssid));  
+    strlcpy(config.wifipassword, doc["wifipass"] | "sensorgarten", sizeof(config.wifipassword));  
     strlcpy(config.adminuser, doc["adminuser"] | "admin", sizeof(config.adminuser));  
     strlcpy(config.adminpassword, doc["adminpass"] | "admin", sizeof(config.adminpassword));  
     strlcpy(config.webuser, doc["webuser"] | "admin", sizeof(config.webuser));  
@@ -32,13 +32,13 @@ bool loadConfig() {
 bool defaultConfig(){
     JsonDocument doc;
     strlcpy(config.host, "AZ_envy", sizeof(config.host));    
-    strlcpy(config.ssid, "devnet-34", sizeof(config.ssid));  
-    strlcpy(config.wifipassword, "testerwlan", sizeof(config.wifipassword));  
+    strlcpy(config.ssid, "Sensor", sizeof(config.ssid));  
+    strlcpy(config.wifipassword, "sensorgarten", sizeof(config.wifipassword));  
     strlcpy(config.adminuser, "admin", sizeof(config.adminuser));  
     strlcpy(config.adminpassword, "admin", sizeof(config.adminpassword));  
     strlcpy(config.webuser, "admin", sizeof(config.webuser));  
     strlcpy(config.webpassword, "admin", sizeof(config.webpassword));  
-    strlcpy(config.mqttserver,"192.168.12.3", sizeof(config.mqttserver));
+    strlcpy(config.mqttserver,"192.168.12.2", sizeof(config.mqttserver));
     config.webserverport =  80;
 
     doc["ssid"] = config.ssid;
@@ -114,7 +114,11 @@ void getSensorReadings() {
   co = mq2.readCO();
   smoke = mq2.readSmoke();
   //float ADWert = analogRead(A0);
-  Serial.println(lpg); Serial.println(String(lpg));
+  Serial.println(lpg); 
+  Serial.println(co);
+  Serial.println(smoke);
+  Serial.println(dewpoint);
+  Serial.println(temperature);
 }
 
 String processor(const String& var) {

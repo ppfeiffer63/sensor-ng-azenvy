@@ -15,8 +15,8 @@
 
 
 
-const char* ssid = "devnet-34";
-const char* password = "testerwlan";
+const char* ssid = "Sensor";
+const char* password = "sensorgarten";
 
 
 
@@ -52,7 +52,7 @@ void setup(void) {
   status = loadConfig();
   defaultConfig();
   if (!status){
-    Serial.println("default config...");
+    Serial.println("load default config...");
     defaultConfig();
   }
   delay(1000);
