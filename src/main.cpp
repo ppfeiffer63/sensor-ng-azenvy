@@ -79,6 +79,12 @@ void loop(void) {
       client.loop();
     }
     getSensorReadings();
+    // Send Events to the Web Server with the Sensor Readings makes sure the server is automatically updated
+    events.send("ping", NULL, millis());
+    events.send(String(temperature).c_str(), "temperature", millis());
+    events.send(String(humidity).c_str(), "humidity", millis());
+    //events.send(String(pressure).c_str(), "pressure", millis());
+    events.send(String(dewpoint).c_str(), "dewpoint", millis());
     lastTime = millis();
   }
   if (IsRebootRequired) {

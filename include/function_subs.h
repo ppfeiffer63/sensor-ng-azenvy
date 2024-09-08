@@ -179,6 +179,7 @@ void initServer(){
       JsonDocument json;
       json["status"] = "ok";
       json["ssid"] = WiFi.SSID();
+      json["rssi"] = WiFi.RSSI();
       json["ip"] = WiFi.localIP().toString();
       serializeJson(json, *response);
       request->send(response);
